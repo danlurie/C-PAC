@@ -2,28 +2,27 @@ from nipype.interfaces.afni import preprocess
 import nipype.pipeline.engine as pe
 import nipype.interfaces.utility as util
 
-
 def create_anat_preproc(already_skullstripped=False):
     """ 
-    
-    The main purpose of this workflow is to process T1 scans. Raw mprage file is deobliqued, reoriented 
-    into RPI and skullstripped. Also, a whole brain only mask is generated from the skull stripped image 
-    for later use in registration.
-    
+    Generate a workflow to do basic anatomical preprocessing (deoblique, reorient, skull-strip).
+
+    Parameters
+    ----------
+    already_skullstripped : bool, optional
+        True/False depending on if the anatomical files used as input have already been skull stripped.
+
     Returns 
     -------
     anat_preproc : workflow
-        Anatomical Preprocessing Workflow
-    
+     
     Notes
     -----
-    
-    `Source <https://github.com/FCP-INDI/C-PAC/blob/master/CPAC/anat_preproc/anat_preproc.py>`_
+    Source code for the latest version can be found `on github <https://github.com/FCP-INDI/C-PAC/blob/master/CPAC/anat_preproc/anat_preproc.py>`_
     
     Workflow Inputs::
     
-        inputspec.anat : mprage file or a list of mprage nifti file 
-            User input anatomical(T1) Image, in any of the 8 orientations
+        inputspec.anat : nifti file or list of nifti files
+            User specified anatomical (T1) image, in any of the 8 orientations
     
     Workflow Outputs::
     
@@ -31,8 +30,6 @@ def create_anat_preproc(already_skullstripped=False):
             Deobliqued anatomical image. 
         outputspec.reorient : nifti file
             RPI oriented anatomical image. 
-        outputspec.skullstrip : nifti file
-            Skull-stripped anatomical image.
         outputspec.brain : nifti file
             Skull-stripped anatomical image.
     
@@ -48,7 +45,7 @@ def create_anat_preproc(already_skullstripped=False):
     
     - Skull-strip. For details see `3dSkullStrip <http://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html>`_::
     
-        3dSkullStrip -input mprage_RPI.nii.gz -o_ply mprage_RPI_3dT.nii.gz
+        3dSkullStrip -input mprage_RPI.nii.gz -orig_vol mprage_RPI_3dT.nii.gz
     
     High Level Workflow Graph:
     
@@ -77,9 +74,9 @@ def create_anat_preproc(already_skullstripped=False):
     Configure Workflow Nodes
     """
 
-    # The input to this workflow is the anatomical image specified in the CPAC subject list.
+    # The input to this workflow is usually the anatomical image specified in the CPAC subject list.
     inputNode = pe.Node(util.IdentityInterface(fields=['anat']), name='inputspec')
-    # This workflow outputs deobliqued, reoriented, and (if applicable) skull-stripped versions of the input image.
+    # This workflow outputs deobliqued, reoriented, and skull-stripped versions of the input image.
     outputNode = pe.Node(util.IdentityInterface(fields=['deoblique', 'reorient', 'skullstrip', 'brain']), name='outputspec')
 
     # Set up deoblique function.
@@ -115,9 +112,8 @@ def create_anat_preproc(already_skullstripped=False):
     preproc.connect(anat_deoblique, 'out_file', outputNode, 'deoblique')
     preproc.connect(anat_reorient, 'out_file', outputNode, 'reorient')
     
-    # Output skull-stripped images.
+    # Output skull-stripped image.
     if not already_skullstripped:
-        preproc.connect(anat_skullstrip, 'out_file', outputNode, 'skullstrip')
         preproc.connect(anat_skullstrip, 'out_file', outputNode, 'brain')
     else:
         preproc.connect(anat_reorient, 'out_file', outputNode, 'brain')
