@@ -6,7 +6,7 @@ import nipype.interfaces.c3 as c3
 
 def create_nonlinear_register(name='nonlinear_register'):
     """
-    Performs non-linear registration of an input file to a reference file.
+    Performs non-linear registration of an input image to a template using FSL (FLIRT/FNIRT).
 
     Parameters
     ----------
@@ -149,7 +149,7 @@ def create_nonlinear_register(name='nonlinear_register'):
 
 def create_register_func_to_mni(name='register_func_to_mni'):
     """
-    Registers a functional scan in native space to MNI standard space.  This is meant to be used 
+    Registers a functional scan in native space to MNI standard space. This is meant to be used 
     after create_nonlinear_register() has been run and relies on some of it's outputs.
 
     Parameters
